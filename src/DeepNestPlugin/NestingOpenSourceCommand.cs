@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Mime;
 using System.Threading;
+using System.Windows.Controls;
 using DeepNestLib;
 using Eto.Forms;
 using Rhino;
@@ -49,14 +50,37 @@ namespace NestingOpenSource
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
 
-          //  var cnt = GetCountFromDialog();
-            Random r = new Random();
-            for (int i = 0; i < 5; i++)
+            //  var cnt = GetCountFromDialog();
+            //Random r = new Random();
+            //for (int i = 0; i < 50; i++)
+            //{
+            //    var xx = r.Next(2000) + 100;
+            //    var yy = r.Next(2000);
+            //    var ww = r.Next(600) + 10;
+            //    var hh = r.Next(600) + 5;
+            //    NFP pl = new NFP();
+            //    int src = 0;
+            //    if (polygons.Any())
+            //    {
+            //        src = polygons.Max(z => z.source.Value) + 1;
+            //    }
+            //    polygons.Add(pl);
+            //    pl.source = src;
+            //    pl.x = xx;
+            //    pl.y = yy;
+            //    pl.Points = new SvgPoint[] { };
+            //    pl.AddPoint(new SvgPoint(0, 0));
+            //    pl.AddPoint(new SvgPoint(ww, 0));
+            //    pl.AddPoint(new SvgPoint(ww, hh));
+            //    pl.AddPoint(new SvgPoint(0, hh));
+            //    pl.AddPoint(new SvgPoint(0, 0));
+            //}
+
+            var rDoc = RhinoDoc.ActiveDoc;
+            var objs = doc.Objects.GetSelectedObjects(false, false).Where(obj => obj.ObjectType == Rhino.DocObjects.ObjectType.Curve).ToList();
+            foreach (var obj in objs)
             {
-                var xx = r.Next(2000) + 100;
-                var yy = r.Next(2000);
-                var ww = r.Next(60) + 10;
-                var hh = r.Next(60) + 5;
+                var crv = obj.Geometry as Curve;
                 NFP pl = new NFP();
                 int src = 0;
                 if (polygons.Any())
@@ -65,13 +89,11 @@ namespace NestingOpenSource
                 }
                 polygons.Add(pl);
                 pl.source = src;
-                pl.x = xx;
-                pl.y = yy;
-                pl.Points = new SvgPoint[] { };
-                pl.AddPoint(new SvgPoint(0, 0));
-                pl.AddPoint(new SvgPoint(ww, 0));
-                pl.AddPoint(new SvgPoint(ww, hh));
-                pl.AddPoint(new SvgPoint(0, hh));
+                foreach (var point in crv.ToPolyline(0.01, 0.01, 10, 5000).ToPolyline())
+                {
+                    pl.AddPoint(new SvgPoint(point.X, point.Y));
+                }
+
             }
             // UpdateList();
 
@@ -79,7 +101,7 @@ namespace NestingOpenSource
             List<Sheet> sh = new List<Sheet>();
             var srcAA = context.GetNextSheetSource();
 
-            sh.Add(NewSheet(3000, 2000));
+            sh.Add(NewSheet(2400, 1200));
             foreach (var item in sh)
             {
                 item.source = srcAA;
@@ -101,7 +123,7 @@ namespace NestingOpenSource
             return Result.Success;
         }
 
-        public Sheet NewSheet(int w = 3000, int h = 1500)
+        public Sheet NewSheet(int w = 2400, int h = 1200)
         {
             var tt = new RectangleSheet();
             tt.Name = "rectSheet" + (sheets.Count + 1);
@@ -120,19 +142,56 @@ namespace NestingOpenSource
                 th = new Thread(() =>
                 {
                     context.StartNest();
-                    UpdateNestsList();
-                    Background.displayProgress = displayProgress;
+                    var sw = new Stopwatch();
+                    sw.Start();
+                    //Background.displayProgress = displayProgress;
 
+                    string curFit = "0.0";
+                    int i = 0;
                     while (true)
                     {
-                        Stopwatch sw = new Stopwatch();
-                        sw.Start();
-
                         context.NestIterate();
-                        UpdateNestsList();
-                        displayProgress(1.0f);
-                        sw.Stop();
-                        //toolStripStatusLabel1.Text = "Nesting time: " + sw.ElapsedMilliseconds + "ms";
+                        if (!curFit.Equals(context.Current.fitness.ToString()))
+                        {
+                            curFit = context.Current.fitness.ToString();
+                            RhinoApp.WriteLine("Iteration: {0} | Fitness: {1}", context.Iterations, context.Current.fitness.ToString());
+                        }
+
+                        if (context.Iterations == 2500)
+                        {
+                            RhinoApp.WriteLine("Finished");
+                            stop = true;
+                            var doc = RhinoDoc.ActiveDoc;
+                            foreach (var item in context.Sheets)
+                            {
+                                var points = new List<Point3d>();
+                                foreach (var point in item.Points)
+                                {
+                                    points.Add(new Point3d(point.x, point.y, 0));
+                                }
+                                doc.Objects.AddPolyline(points);
+                            }
+
+                            foreach (var part in context.Polygons)
+                            {
+                                var points = new List<Point3d>();
+                                foreach (var point in part.Points)
+                                {
+                                    points.Add(new Point3d(point.x, point.y, 0));
+                                }
+                                var polyline = new Polyline(points);
+                                var crv = polyline.ToPolylineCurve();
+                                crv.MakeClosed(0.01);
+                                crv.Rotate(part.rotation * (Math.PI / 180), Vector3d.ZAxis, Point3d.Origin);
+                                crv.Translate(new Vector3d(part.x, part.y, 0));
+                                doc.Objects.AddCurve(crv);
+                            }
+                            RhinoApp.WriteLine("Material Utilization: {0}", context.MaterialUtilization.ToString());
+                            RhinoApp.WriteLine("Total Time: {0}s", Math.Round(sw.Elapsed.TotalSeconds));
+                            doc.Views.Redraw();
+                            sw.Stop();
+                        }
+                        i++;
                         if (stop) break;
                     }
                     th = null;
