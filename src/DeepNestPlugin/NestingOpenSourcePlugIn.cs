@@ -1,5 +1,6 @@
 ﻿using System;
 using Rhino.PlugIns;
+using RMA.UI;
 
 namespace NestingOpenSource
 {
@@ -13,9 +14,7 @@ namespace NestingOpenSource
     ///</summary>
     public class NestingOpenSourcePlugIn : Rhino.PlugIns.PlugIn
     {
-
-
-
+        //private MRhinoUiDockBar UIContainer = null;
         public NestingOpenSourcePlugIn()
         {
             Instance = this;
@@ -30,5 +29,16 @@ namespace NestingOpenSource
         // You can override methods here to change the plug-in behavior on
         // loading and shut down, add options pages to the Rhino _Option command
         // and maintain plug-in wide options in a document.
+        protected override LoadReturnCode OnLoad(ref string errorMessage)
+        {
+            //MRhinoDockBarManager.CreateRhinoDockBar(
+            //    this, UIContainer,
+            //    true,
+            //    MRhinoUiDockBar.DockLocation.floating,
+            //    MRhinoUiDockBar.DockStyle.any,
+            //    new System.Drawing.Point(300, 300));
+
+            return base.OnLoad(ref errorMessage);
+        }
     }
 }
