@@ -21,7 +21,7 @@ namespace NestingOpenSource
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
             var UIContainer = new MRhinoUiDockBar(Guid.NewGuid()/*new Guid("218100D1-3558-42F5-908A-5D74F2E9C975")*/, "XFrame Nesting", new XFrameNestingControl());
-            UIContainer.SetInitialSizeFloating(new System.Drawing.Size(303, 540));
+            UIContainer.SetInitialSizeFloating(new System.Drawing.Size(303, 620));
             MRhinoDockBarManager.CreateRhinoDockBar(
                 NestingOpenSourcePlugIn.Instance, UIContainer,
                 true,

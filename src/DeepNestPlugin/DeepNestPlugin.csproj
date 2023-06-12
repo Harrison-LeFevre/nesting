@@ -68,6 +68,9 @@
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
     <Reference Include="WindowsFormsIntegration" />
+    <Reference Include="XFrameUtilitiesLibrary">
+      <HintPath>..\..\..\..\Users\lefev\XFrame\XFrame - Assets and Resources\02_XFrame Fabrication\2_Scripts\XFrame_Rhino_Plugin\XFrameUtilitiesLibrary.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="NestingOpenSourceCommand.cs" />

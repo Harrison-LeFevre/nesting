@@ -1027,7 +1027,7 @@ namespace DeepNestLib
         public int populationSize = 10;
         public int rotations = 4;
         public double spacing = 10.2;
-        public double sheetSpacing = 0;
+        public double sheetSpacing = 500;
         public bool useHoles = false;
         public double timeRatio = 0.5;
         public bool mergeLines = false;

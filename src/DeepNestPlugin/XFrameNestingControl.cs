@@ -19,6 +19,8 @@ namespace NestingOpenSource
         {
             InitializeComponent();
             this.Load += new EventHandler(SetRhinoCommands);
+            MaterialWidthBox.SelectedIndex = 0;
+            MaterialLengthBox.SelectedIndex = 0;
         }
 
         private void SetRhinoCommands(object sender, EventArgs e)
@@ -61,6 +63,10 @@ namespace NestingOpenSource
 
         private void NestPartsButton_Click(object sender, EventArgs e)
         {
+            IterationProgressBar.Minimum = 0;
+            IterationProgressBar.Maximum = 500;
+            IterationProgressBar.Value = 0;
+
             var doc = RhinoDoc.ActiveDoc;
             var parts = new SortedDictionary<string, int>();
             foreach (DataGridViewRow row in dataGridView1.Rows)
@@ -73,8 +79,10 @@ namespace NestingOpenSource
             }
 
             var curves = NestSheet.GetBlockBoundaryCurves(doc, parts);
-            var nest = new NestSheet(curves, 1200, 2400);
-            nest.Nest();
+            var width = int.TryParse(MaterialWidthBox.SelectedItem.ToString(), out int matWidth) ? matWidth : 1200;
+            var length = int.TryParse(MaterialLengthBox.SelectedItem.ToString(), out int matLength) ? matLength : 2400;
+            var nest = new NestSheet(curves, width, length);
+            nest.Nest(IterationProgressBar, IterationLabel, UseBoundingBoxesCheckBox.Checked, UseMultipleSheetsCheckBox.Checked);
             doc.Objects.UnselectAll();
             doc.Views.Redraw();
         }
